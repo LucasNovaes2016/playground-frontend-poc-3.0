@@ -82,9 +82,15 @@ export function createService(
       : (options.params ?? {});
 
     const token = getToken();
+
+    const isFormData =
+      options.body instanceof FormData || options.body instanceof Blob;
+
     const defaultHeaders: Record<string, string> = {
       Accept: "application/json",
-      "Content-Type": "application/json",
+      ...(!isFormData && {
+        "Content-Type": "application/json",
+      }),
       ...(!config.skipDefaultRequestMiddleware && token
         ? { Authorization: `Bearer ${token}` }
         : {}),
@@ -98,10 +104,18 @@ export function createService(
     const queryString = formatQueryString(params);
     let url = `${baseURL}${path}${queryString ? `?${queryString}` : ""}`;
 
+    let body: BodyInit | undefined;
+
+    if (options.body instanceof FormData || options.body instanceof Blob) {
+      body = options.body;
+    } else if (options.body !== undefined) {
+      body = JSON.stringify(options.body);
+    }
+
     let init: RequestInit = {
       method: options.method ?? "GET",
       headers: mergedHeaders,
-      body: options.body ? JSON.stringify(options.body) : undefined,
+      body,
     };
 
     if (config.requestInterceptor) {
@@ -115,6 +129,7 @@ export function createService(
     }
 
     const response = await fetch(url, init);
+
     const handledResponse = config.responseInterceptor
       ? await config.responseInterceptor(response)
       : response;
