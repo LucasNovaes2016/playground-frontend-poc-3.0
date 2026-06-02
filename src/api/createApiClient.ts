@@ -1,5 +1,5 @@
 import { ApiClient, CreateApiClientOptions, RequestOptions } from "../types";
-import { AUTH_DATA, clearToken, formatQueryString, getToken } from "../utils";
+import { clearToken, formatQueryString, getToken } from "../utils";
 
 export function createApiClient(
   baseURL: string,
@@ -9,18 +9,12 @@ export function createApiClient(
     path: string,
     options: RequestOptions = {},
   ): Promise<T> {
-    const defaultParams = {
-      userId: AUTH_DATA.userId,
-      tenant: AUTH_DATA.tenant,
-      appClient: "web",
-    };
-
     const useDefaultRequest =
       !config.skipDefaultRequestMiddleware &&
       !options.skipDefaultRequestMiddleware;
 
-    const params = useDefaultRequest
-      ? { ...defaultParams, ...options.params }
+    const params: Record<string, unknown> = useDefaultRequest
+      ? { ...(config.defaultParams ?? {}), ...(options.params ?? {}) }
       : (options.params ?? {});
 
     const token = getToken();
@@ -33,7 +27,7 @@ export function createApiClient(
       ...(!isFormData && {
         "Content-Type": "application/json",
       }),
-      ...(!config.skipDefaultRequestMiddleware && token
+      ...(useDefaultRequest && token
         ? { Authorization: `Bearer ${token}` }
         : {}),
     };

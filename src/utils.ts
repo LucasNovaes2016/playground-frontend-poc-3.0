@@ -1,9 +1,3 @@
-export const AUTH_DATA = {
-  token: "fake-auth-token-1234",
-  userId: 42,
-  tenant: "playground",
-};
-
 export function getToken(): string | null {
   return localStorage.getItem("authToken");
 }

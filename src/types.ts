@@ -8,6 +8,7 @@ export interface RequestOptions {
 }
 
 export interface CreateApiClientOptions {
+  defaultParams?: Record<string, unknown>;
   skipDefaultRequestMiddleware?: boolean;
   skipDefaultResponseMiddleware?: boolean;
   requestInterceptor?: (config: {
