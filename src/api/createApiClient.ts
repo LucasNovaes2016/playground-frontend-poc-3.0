@@ -81,12 +81,32 @@ export function createApiClient(
     }
 
     if (!handledResponse.ok) {
+      let errorData: unknown = null;
+
+      try {
+        errorData = await handledResponse.json();
+      } catch {
+        try {
+          errorData = await handledResponse.text();
+        } catch {
+          errorData = null;
+        }
+      }
+
       const error = new Error(
-        `Failed to fetch ${path}: ${handledResponse.status} ${handledResponse.statusText}`,
-      );
+        `Request failed: ${handledResponse.status} ${handledResponse.statusText}`,
+      ) as Error & {
+        status?: number;
+        data?: unknown;
+      };
+
+      error.status = handledResponse.status;
+      error.data = errorData;
+
       if (config.errorInterceptor) {
         await config.errorInterceptor(error);
       }
+
       throw error;
     }
 
