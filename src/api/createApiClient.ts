@@ -1,67 +1,9 @@
-export const AUTH_DATA = {
-  token: "fake-auth-token-1234",
-  userId: 42,
-  tenant: "playground",
-};
+import { ApiClient, CreateApiClientOptions, RequestOptions } from "../types";
+import { AUTH_DATA, clearToken, formatQueryString, getToken } from "../utils";
 
-export function getToken(): string | null {
-  return localStorage.getItem("authToken") || AUTH_DATA.token;
-}
-
-export function clearToken(): void {
-  localStorage.removeItem("authToken");
-}
-
-export function formatQueryString(
-  params: Record<string, unknown> = {},
-): string {
-  const entries = Object.entries(params)
-    .filter(([, value]) => value !== undefined && value !== null)
-    .map(([key, value]) => {
-      if (Array.isArray(value)) {
-        return value
-          .map(
-            (item) =>
-              `${encodeURIComponent(key)}=${encodeURIComponent(String(item))}`,
-          )
-          .join("&");
-      }
-      return `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`;
-    });
-
-  return entries.join("&");
-}
-
-export interface RequestOptions {
-  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  params?: Record<string, unknown>;
-  headers?: Record<string, string>;
-  body?: unknown;
-  skipDefaultRequestMiddleware?: boolean;
-  skipDefaultResponseMiddleware?: boolean;
-}
-
-export interface CreateServiceOptions {
-  skipDefaultRequestMiddleware?: boolean;
-  skipDefaultResponseMiddleware?: boolean;
-  requestInterceptor?: (config: {
-    url: string;
-    init: RequestInit;
-    options: RequestOptions;
-  }) =>
-    | Promise<{ url: string; init: RequestInit }>
-    | { url: string; init: RequestInit };
-  responseInterceptor?: (response: Response) => Promise<Response> | Response;
-  errorInterceptor?: (error: unknown) => Promise<unknown> | unknown;
-}
-
-export interface ApiClient {
-  request<T>(path: string, options?: RequestOptions): Promise<T>;
-}
-
-export function createService(
+export function createApiClient(
   baseURL: string,
-  config: CreateServiceOptions = {},
+  config: CreateApiClientOptions = {},
 ): ApiClient {
   async function request<T>(
     path: string,

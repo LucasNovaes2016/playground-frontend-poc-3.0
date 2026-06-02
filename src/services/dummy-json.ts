@@ -1,4 +1,4 @@
-import { dummyJsonApi } from "../providers/dummyJsonService";
+import { dummyJsonApi } from "../api/dummyJsonApi";
 
 export interface Product {
   id: number;

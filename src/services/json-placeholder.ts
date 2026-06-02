@@ -1,4 +1,4 @@
-import { jsonPlaceholderApi } from "../providers/jsonPlaceholderService";
+import { jsonPlaceholderApi } from "../api/jsonPlaceholderApi";
 
 export interface Post {
   userId: number;

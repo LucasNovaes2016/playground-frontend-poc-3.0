@@ -1,4 +1,4 @@
-import { authServiceApi } from "../providers/authService";
+import { authApi } from "../api/authApi";
 
 export type AuthRequest = {
   email: string;
@@ -15,14 +15,14 @@ export type AuthResponse = {
 };
 
 export const login = async (data: AuthRequest): Promise<AuthResponse> => {
-  return authServiceApi.request("/auth/login", {
+  return authApi.request("/auth/login", {
     method: "POST",
     body: JSON.stringify(data),
   });
 };
 
 export const logout = async (): Promise<void> => {
-  await authServiceApi.request("/auth/logout", {
+  await authApi.request("/auth/logout", {
     method: "POST",
   });
 };
