@@ -37,13 +37,32 @@ export interface RequestOptions {
   params?: Record<string, unknown>;
   headers?: Record<string, string>;
   body?: unknown;
+  skipDefaultRequestMiddleware?: boolean;
+  skipDefaultResponseMiddleware?: boolean;
+}
+
+export interface CreateServiceOptions {
+  skipDefaultRequestMiddleware?: boolean;
+  skipDefaultResponseMiddleware?: boolean;
+  requestInterceptor?: (config: {
+    url: string;
+    init: RequestInit;
+    options: RequestOptions;
+  }) =>
+    | Promise<{ url: string; init: RequestInit }>
+    | { url: string; init: RequestInit };
+  responseInterceptor?: (response: Response) => Promise<Response> | Response;
+  errorInterceptor?: (error: unknown) => Promise<unknown> | unknown;
 }
 
 export interface ApiClient {
   request<T>(path: string, options?: RequestOptions): Promise<T>;
 }
 
-export function createService(baseURL: string): ApiClient {
+export function createService(
+  baseURL: string,
+  config: CreateServiceOptions = {},
+): ApiClient {
   async function request<T>(
     path: string,
     options: RequestOptions = {},
@@ -54,16 +73,21 @@ export function createService(baseURL: string): ApiClient {
       appClient: "web",
     };
 
-    const params = {
-      ...defaultParams,
-      ...options.params,
-    };
+    const useDefaultRequest =
+      !config.skipDefaultRequestMiddleware &&
+      !options.skipDefaultRequestMiddleware;
+
+    const params = useDefaultRequest
+      ? { ...defaultParams, ...options.params }
+      : (options.params ?? {});
 
     const token = getToken();
     const defaultHeaders: Record<string, string> = {
       Accept: "application/json",
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(!config.skipDefaultRequestMiddleware && token
+        ? { Authorization: `Bearer ${token}` }
+        : {}),
     };
 
     const mergedHeaders = {
@@ -72,27 +96,50 @@ export function createService(baseURL: string): ApiClient {
     };
 
     const queryString = formatQueryString(params);
-    const url = `${baseURL}${path}${queryString ? `?${queryString}` : ""}`;
+    let url = `${baseURL}${path}${queryString ? `?${queryString}` : ""}`;
 
-    const response = await fetch(url, {
+    let init: RequestInit = {
       method: options.method ?? "GET",
       headers: mergedHeaders,
       body: options.body ? JSON.stringify(options.body) : undefined,
-    });
+    };
 
-    if (response.status === 401) {
+    if (config.requestInterceptor) {
+      const intercepted = await config.requestInterceptor({
+        url,
+        init,
+        options,
+      });
+      url = intercepted.url;
+      init = intercepted.init;
+    }
+
+    const response = await fetch(url, init);
+    const handledResponse = config.responseInterceptor
+      ? await config.responseInterceptor(response)
+      : response;
+
+    if (
+      handledResponse.status === 401 &&
+      !config.skipDefaultResponseMiddleware &&
+      !options.skipDefaultResponseMiddleware
+    ) {
       await clearToken();
       window.location.reload();
       throw new Error("Unauthorized");
     }
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch ${path}: ${response.status} ${response.statusText}`,
+    if (!handledResponse.ok) {
+      const error = new Error(
+        `Failed to fetch ${path}: ${handledResponse.status} ${handledResponse.statusText}`,
       );
+      if (config.errorInterceptor) {
+        await config.errorInterceptor(error);
+      }
+      throw error;
     }
 
-    return response.json();
+    return handledResponse.json();
   }
 
   return { request };
