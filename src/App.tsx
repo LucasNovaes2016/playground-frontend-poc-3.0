@@ -1,7 +1,5 @@
-import ApiClientDemo from "./components/ApiClientDemo";
-
 function App() {
-  return <ApiClientDemo />;
+  return <h1>hello world</h1>;
 }
 
 export default App;
