@@ -1,0 +1,71 @@
+.posts-table__wrapper {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.05);
+}
+
+.posts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.posts-table thead th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  background: #f9fafb;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.posts-table__col-id {
+  width: 4rem;
+  text-align: left;
+}
+
+.posts-table__col-author {
+  width: 14rem;
+  white-space: nowrap;
+}
+
+.posts-table__row {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.posts-table__row:nth-child(even) {
+  background: #fbfcfe;
+}
+
+.posts-table__row:hover {
+  background: #eff6ff;
+}
+
+.posts-table__row:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+
+.posts-table td {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  color: #111827;
+  vertical-align: top;
+}
+
+.posts-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.posts-table__title {
+  font-weight: 500;
+  text-transform: capitalize;
+}
