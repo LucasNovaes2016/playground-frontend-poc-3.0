@@ -8,6 +8,7 @@ import {
 } from "./components/PostFilters";
 import { PostsTable } from "./components/PostsTable";
 import { PostDetails } from "./components/PostDetails";
+import { buildAuthorNameById, filterPosts } from "./lib/posts";
 import { Loading } from "./components/feedback/Loading";
 import { ErrorState } from "./components/feedback/ErrorState";
 import { EmptyState } from "./components/feedback/EmptyState";
@@ -26,22 +27,15 @@ function App() {
   const [filters, setFilters] = useState<PostFilterValues>(EMPTY_FILTERS);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
 
-  const authorNameById = useMemo(() => {
-    const map = new Map<number, string>();
-    (users ?? []).forEach((user) => map.set(user.id, user.name));
-    return map;
-  }, [users]);
+  const authorNameById = useMemo(
+    () => buildAuthorNameById(users ?? []),
+    [users],
+  );
 
-  const filteredPosts = useMemo(() => {
-    const titleQuery = filters.title.toLowerCase();
-    return (posts ?? []).filter((post) => {
-      const matchesTitle =
-        titleQuery === "" || post.title.toLowerCase().includes(titleQuery);
-      const matchesUser =
-        filters.userId === "" || String(post.userId) === filters.userId;
-      return matchesTitle && matchesUser;
-    });
-  }, [posts, filters]);
+  const filteredPosts = useMemo(
+    () => filterPosts(posts ?? [], filters),
+    [posts, filters],
+  );
 
   return (
     <div className="app">
