@@ -6,3 +6,12 @@ npm-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .vscode
+
+# Test coverage
+/coverage/
+
+# Playwright
+/playwright-report/
+/test-results/
+/playwright/.cache/
+/blob-report/
