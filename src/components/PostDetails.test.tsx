@@ -4,7 +4,7 @@ import { http, HttpResponse } from "msw";
 import { vi } from "vitest";
 import { PostDetails } from "./PostDetails";
 import { buildAuthorNameById } from "../lib/posts";
-import { samplePosts, sampleUsers } from "../test/fixtures";
+import { samplePosts, sampleUsers, sampleComments } from "../test/fixtures";
 import { server } from "../test/msw/server";
 
 const BASE_URL = "https://jsonplaceholder.typicode.com";
@@ -34,6 +34,9 @@ describe("<PostDetails />", () => {
     expect(await screen.findByText("Introdução ao React")).toBeInTheDocument();
     expect(screen.getByText(samplePosts[0].body)).toBeInTheDocument();
     expect(screen.getByText("por Leanne Graham")).toBeInTheDocument();
+
+    // os comentários são carregados abaixo dos detalhes assim que o post chega
+    expect(await screen.findByText(sampleComments[0].body)).toBeInTheDocument();
   });
 
   it("mostra erro com retry e se recupera ao tentar novamente", async () => {

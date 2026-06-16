@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { samplePosts, sampleUsers } from "../fixtures";
+import { samplePosts, sampleUsers, sampleComments } from "../fixtures";
 
 const BASE_URL = "https://jsonplaceholder.typicode.com";
 
@@ -20,5 +20,10 @@ export const handlers = [
       return new HttpResponse(null, { status: 404 });
     }
     return HttpResponse.json(post);
+  }),
+
+  http.get(`${BASE_URL}/posts/:id/comments`, ({ params }) => {
+    const id = Number(params.id);
+    return HttpResponse.json(sampleComments.filter((c) => c.postId === id));
   }),
 ];

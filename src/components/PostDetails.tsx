@@ -4,6 +4,7 @@ import { useFetch } from "../hooks/useFetch";
 import { Loading } from "./feedback/Loading";
 import { ErrorState } from "./feedback/ErrorState";
 import { EmptyState } from "./feedback/EmptyState";
+import { PostComments } from "./PostComments";
 import "./PostDetails.css";
 
 interface PostDetailsProps {
@@ -35,16 +36,20 @@ export function PostDetails({
       )}
 
       {!loading && !error && post && (
-        <article className="post-details__card">
-          <div className="post-details__meta">
-            <span className="post-details__badge">Post #{post.id}</span>
-            <span className="post-details__author">
-              por {authorNameById.get(post.userId) ?? `Usuário ${post.userId}`}
-            </span>
-          </div>
-          <h2 className="post-details__title">{post.title}</h2>
-          <p className="post-details__body">{post.body}</p>
-        </article>
+        <>
+          <article className="post-details__card">
+            <div className="post-details__meta">
+              <span className="post-details__badge">Post #{post.id}</span>
+              <span className="post-details__author">
+                por {authorNameById.get(post.userId) ?? `Usuário ${post.userId}`}
+              </span>
+            </div>
+            <h2 className="post-details__title">{post.title}</h2>
+            <p className="post-details__body">{post.body}</p>
+          </article>
+
+          <PostComments postId={post.id} />
+        </>
       )}
     </div>
   );

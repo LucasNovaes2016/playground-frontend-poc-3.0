@@ -1,4 +1,4 @@
-import type { Post, User } from "../types";
+import type { Comment, Post, User } from "../types";
 
 /**
  * Dados de amostra reutilizados pelos handlers do MSW e pelas asserções.
@@ -38,5 +38,24 @@ export const samplePosts: Post[] = [
     id: 3,
     title: "Testes com Vitest",
     body: "Conteúdo do terceiro post.",
+  },
+];
+
+// Comentários do post 1; o post 2 fica sem comentários de propósito,
+// para exercitar o estado vazio.
+export const sampleComments: Comment[] = [
+  {
+    postId: 1,
+    id: 1,
+    name: "Maria Silva",
+    email: "maria@example.com",
+    body: "Excelente introdução, ajudou bastante!",
+  },
+  {
+    postId: 1,
+    id: 2,
+    name: "João Souza",
+    email: "joao@example.com",
+    body: "Fiquei com uma dúvida sobre os hooks.",
   },
 ];

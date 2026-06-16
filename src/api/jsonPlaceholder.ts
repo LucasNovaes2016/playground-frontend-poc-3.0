@@ -1,4 +1,4 @@
-import type { Post, User } from "../types";
+import type { Comment, Post, User } from "../types";
 
 const BASE_URL = "https://jsonplaceholder.typicode.com";
 
@@ -32,4 +32,8 @@ export function getUsers(): Promise<User[]> {
 
 export function getPost(id: number): Promise<Post> {
   return request<Post>(`/posts/${id}`);
+}
+
+export function getComments(postId: number): Promise<Comment[]> {
+  return request<Comment[]>(`/posts/${postId}/comments`);
 }

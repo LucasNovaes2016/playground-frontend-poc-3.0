@@ -1,5 +1,5 @@
 import { type Page, type Route } from "@playwright/test";
-import { findPost, posts, users } from "./data";
+import { commentsOf, findPost, posts, users } from "./data";
 
 // Todas as chamadas do app vão para este host.
 const API_GLOB = "**/jsonplaceholder.typicode.com/**";
@@ -8,32 +8,42 @@ function pathnameOf(route: Route): string {
   return new URL(route.request().url()).pathname;
 }
 
-type Endpoint = "users" | "posts" | "post";
+type Endpoint = "users" | "posts" | "post" | "comments";
 
 function classify(pathname: string): { kind: Endpoint; id?: number } | null {
   if (/\/users$/.test(pathname)) return { kind: "users" };
   if (/\/posts$/.test(pathname)) return { kind: "posts" };
+  const commentsMatch = pathname.match(/\/posts\/(\d+)\/comments$/);
+  if (commentsMatch) return { kind: "comments", id: Number(commentsMatch[1]) };
   const match = pathname.match(/\/posts\/(\d+)$/);
   if (match) return { kind: "post", id: Number(match[1]) };
   return null;
 }
 
+// Serve a fixture correspondente ao alvo (caminho feliz). Centraliza a lógica
+// para que todas as funções de mock reaproveitem o mesmo comportamento.
+function fulfillHappy(route: Route, target: { kind: Endpoint; id?: number }) {
+  if (target.kind === "users") return route.fulfill({ json: users });
+  if (target.kind === "posts") return route.fulfill({ json: posts });
+  if (target.kind === "comments")
+    return route.fulfill({ json: commentsOf(target.id!) });
+
+  const post = findPost(target.id!);
+  return post
+    ? route.fulfill({ json: post })
+    : route.fulfill({ status: 404, contentType: "application/json", body: "{}" });
+}
+
 /**
- * Caminho feliz: intercepta /users, /posts e /posts/:id servindo as fixtures.
+ * Caminho feliz: intercepta /users, /posts, /posts/:id e /posts/:id/comments
+ * servindo as fixtures.
  * Registre SEMPRE antes do page.goto() para interceptar o carregamento inicial.
  */
 export async function mockHappyApi(page: Page): Promise<void> {
   await page.route(API_GLOB, (route) => {
     const target = classify(pathnameOf(route));
     if (!target) return route.continue();
-
-    if (target.kind === "users") return route.fulfill({ json: users });
-    if (target.kind === "posts") return route.fulfill({ json: posts });
-
-    const post = findPost(target.id!);
-    return post
-      ? route.fulfill({ json: post })
-      : route.fulfill({ status: 404, contentType: "application/json", body: "{}" });
+    return fulfillHappy(route, target);
   });
 }
 
@@ -41,9 +51,9 @@ export async function mockHappyApi(page: Page): Promise<void> {
 export async function mockEmptyPosts(page: Page): Promise<void> {
   await page.route(API_GLOB, (route) => {
     const target = classify(pathnameOf(route));
-    if (target?.kind === "users") return route.fulfill({ json: users });
-    if (target?.kind === "posts") return route.fulfill({ json: [] });
-    return route.continue();
+    if (!target) return route.continue();
+    if (target.kind === "posts") return route.fulfill({ json: [] });
+    return fulfillHappy(route, target);
   });
 }
 
@@ -63,7 +73,7 @@ export interface FailingApi {
  */
 export async function mockFailing(
   page: Page,
-  endpoint: "posts" | "post",
+  endpoint: "posts" | "post" | "comments",
   status = 500,
 ): Promise<FailingApi> {
   let healed = false;
@@ -71,12 +81,7 @@ export async function mockFailing(
     const target = classify(pathnameOf(route));
     if (!target) return route.continue();
 
-    if (target.kind === "users") return route.fulfill({ json: users });
-
-    const isTarget =
-      (endpoint === "posts" && target.kind === "posts") ||
-      (endpoint === "post" && target.kind === "post");
-
+    const isTarget = target.kind === endpoint;
     if (isTarget && !healed) {
       return route.fulfill({
         status,
@@ -85,11 +90,7 @@ export async function mockFailing(
       });
     }
 
-    if (target.kind === "posts") return route.fulfill({ json: posts });
-    const post = findPost(target.id!);
-    return post
-      ? route.fulfill({ json: post })
-      : route.fulfill({ status: 404, contentType: "application/json", body: "{}" });
+    return fulfillHappy(route, target);
   });
 
   return {
@@ -103,11 +104,10 @@ export async function mockFailing(
 export async function mockPostNotFound(page: Page): Promise<void> {
   await page.route(API_GLOB, (route) => {
     const target = classify(pathnameOf(route));
-    if (target?.kind === "users") return route.fulfill({ json: users });
-    if (target?.kind === "posts") return route.fulfill({ json: posts });
-    if (target?.kind === "post")
+    if (!target) return route.continue();
+    if (target.kind === "post")
       return route.fulfill({ status: 404, contentType: "application/json", body: "{}" });
-    return route.continue();
+    return fulfillHappy(route, target);
   });
 }
 
@@ -117,24 +117,14 @@ export async function mockPostNotFound(page: Page): Promise<void> {
  */
 export async function mockSlowApi(
   page: Page,
-  endpoint: "posts" | "post",
+  endpoint: "posts" | "post" | "comments",
   delayMs = 1500,
 ): Promise<void> {
   await page.route(API_GLOB, async (route) => {
     const target = classify(pathnameOf(route));
     if (!target) return route.continue();
 
-    if (target.kind === "users") return route.fulfill({ json: users });
-
-    const shouldDelay =
-      (endpoint === "posts" && target.kind === "posts") ||
-      (endpoint === "post" && target.kind === "post");
-    if (shouldDelay) await new Promise((r) => setTimeout(r, delayMs));
-
-    if (target.kind === "posts") return route.fulfill({ json: posts });
-    const post = findPost(target.id!);
-    return post
-      ? route.fulfill({ json: post })
-      : route.fulfill({ status: 404, contentType: "application/json", body: "{}" });
+    if (target.kind === endpoint) await new Promise((r) => setTimeout(r, delayMs));
+    return fulfillHappy(route, target);
   });
 }

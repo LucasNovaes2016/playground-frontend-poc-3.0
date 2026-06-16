@@ -1,6 +1,6 @@
 import { afterEach, vi } from "vitest";
-import { getPost, getPosts, getUsers } from "./jsonPlaceholder";
-import { samplePosts, sampleUsers } from "../test/fixtures";
+import { getComments, getPost, getPosts, getUsers } from "./jsonPlaceholder";
+import { samplePosts, sampleUsers, sampleComments } from "../test/fixtures";
 
 // Testes UNITÁRIOS do client HTTP: mockamos `fetch` diretamente para exercitar
 // os dois ramos do wrapper `request<T>()` (erro de rede x HTTP não-ok), sem
@@ -36,6 +36,15 @@ describe("jsonPlaceholder client", () => {
       await expect(getPost(1)).resolves.toEqual(samplePosts[0]);
       expect(spy).toHaveBeenCalledWith(
         "https://jsonplaceholder.typicode.com/posts/1",
+      );
+    });
+
+    it("getComments faz GET /posts/:id/comments e devolve a lista", async () => {
+      const spy = mockFetchOnce({ ok: true, json: async () => sampleComments });
+
+      await expect(getComments(1)).resolves.toEqual(sampleComments);
+      expect(spy).toHaveBeenCalledWith(
+        "https://jsonplaceholder.typicode.com/posts/1/comments",
       );
     });
   });

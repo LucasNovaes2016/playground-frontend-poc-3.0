@@ -15,6 +15,13 @@ export class PostDetailsPage {
   readonly loading: Locator;
   readonly errorAlert: Locator;
   readonly retryButton: Locator;
+  // Seção de comentários (renderizada abaixo dos detalhes do post).
+  readonly comments: Locator;
+  readonly commentsHeading: Locator;
+  readonly commentsLoading: Locator;
+  readonly commentsEmpty: Locator;
+  readonly commentsError: Locator;
+  readonly commentsRetryButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -28,6 +35,30 @@ export class PostDetailsPage {
     this.loading = page.getByText("Carregando detalhes do post...");
     this.errorAlert = page.getByRole("alert");
     this.retryButton = page.getByRole("button", { name: "Tentar novamente" });
+
+    // Tudo da seção de comentários é escopado ao container para não colidir
+    // com o alerta/retry de erro do próprio post.
+    this.comments = page.getByRole("region", { name: "Comentários" });
+    this.commentsHeading = this.comments.getByRole("heading", { level: 3 });
+    this.commentsLoading = this.comments.getByText("Carregando comentários...");
+    this.commentsEmpty = this.comments.getByText("Nenhum comentário ainda.");
+    this.commentsError = this.comments.getByRole("alert");
+    this.commentsRetryButton = this.comments.getByRole("button", {
+      name: "Tentar novamente",
+    });
+  }
+
+  // Os comentários são itens de lista (<li>) dentro da seção.
+  commentItems(): Locator {
+    return this.comments.getByRole("listitem");
+  }
+
+  commentByText(text: string): Locator {
+    return this.commentItems().filter({ hasText: text });
+  }
+
+  async retryComments(): Promise<void> {
+    await this.commentsRetryButton.click();
   }
 
   async expectLoaded(): Promise<void> {
